@@ -1,1 +1,1 @@
-kops delete cluster --name behenchd.k8s.local --yes
+kops delete cluster --name rahams.k8s.local --yes
