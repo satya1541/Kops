@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# Update PATH
+echo 'export PATH=$PATH:/usr/local/bin/' >> ~/.bashrc
+source ~/.bashrc
+
+# Configure AWS CLI
+aws configure
+
+# Install kubectl
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+
+# Install kops
+wget https://github.com/kubernetes/kops/releases/download/v1.25.0/kops-linux-amd64
+
+# Make the binaries executable
+chmod +x kops-linux-amd64 kubectl
+
+# Move the binaries to /usr/local/bin
+sudo mv kubectl /usr/local/bin/kubectl
+sudo mv kops-linux-amd64 /usr/local/bin/kops
+
+# Create an S3 bucket for kops state storage
+BUCKET_NAME="cloudanddevopsbyraham0073456.k8s.local"
+aws s3api create-bucket --bucket ${BUCKET_NAME} --region us-east-1
+aws s3api put-bucket-versioning --bucket ${BUCKET_NAME} --versioning-configuration Status=Enabled
+
+# Set the KOPS_STATE_STORE environment variable
+export KOPS_STATE_STORE=s3://${BUCKET_NAME}
+
+# Create a Kubernetes cluster with kops
+kops create cluster --name rahams.k8s.local --zones us-east-1a --master-count=1 --master-size t2.medium --node-count=2 --node-size t2.medium
+
+# Update the cluster configuration and apply it
+kops update cluster --name rahams.k8s.local --yes --admin
